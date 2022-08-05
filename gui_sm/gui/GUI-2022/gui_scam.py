@@ -16,8 +16,8 @@ from PyQt5.QtCore import*
 import datetime
 import pickle
 import numpy as np
-import matplotlib.pyplot as plt
-from scipy.interpolate import make_interp_spline, BSpline
+import decimal
+import random
 
 
 class Ui_MainWindow(object):
@@ -32,10 +32,10 @@ class Ui_MainWindow(object):
         self.IP = socket.gethostbyname(host)
         self.IP_add = "127.0.1.1"
         self.IP_add_c2 = "172.20.10.4"
-        self.IP_add_c1 = "192.168.1.25"
+        self.IP_add_c1 = "192.168.1.101"
         self.port1 = 502
         self.port2 = 9047
-        self.port3 = 9100
+        self.port3 = 9058
         self.port4 = 12345
 
         # Socket Declerations
@@ -46,6 +46,7 @@ class Ui_MainWindow(object):
         # Thread Declerations
         self.th_setLabelValues = threading.Thread(target=self.SetLabelValues)
         self.save_imageThread = threading.Thread(target=self.saveImage)
+        self.get_graph_th = threading.Thread(target=self.getSpecrometerGraph)
         self.changeRGBLabelColorThread = threading.Thread(
             target=self.changeRGBLabelColor)
         self.th_setCameraImageLabel = threading.Thread(
@@ -57,13 +58,11 @@ class Ui_MainWindow(object):
         self.colorpal_b = 0.0000
         self.hyd_moisture = 0.0000
         self.hyd_cond = 0.0000
-        self.hyd_temp = 48.0854
-        self.methane_ppm = 0.0000
-        self.pressure = 1.0567
+        self.hyd_temp = 0.0000
+        self.pressure = 0.0000
         self.spectral = 0.0000
         self.ozone_ppb = 0.0000
         self.voc_ppm = 0.0000
-        self.CO2_val = 0.0
         self.colorpal_r_msg = "ColorPal R : "
         self.colorpal_g_msg = "ColorPal G : "
         self.colorpal_b_msg = "ColorPal B : "
@@ -82,46 +81,48 @@ class Ui_MainWindow(object):
         self.css = ""
 
     def Recv_Data(self):
-        self.c = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.c.connect((self.IP_add, self.port4))
+        # self.c = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        # self.c.connect((self.IP_add, self.port4))
+        self.get_graph_th.start()
         while True:
-            #print("Waiting for Data")
+            # print("Waiting for Data")
             time.sleep(5)
-            self.msg = self.c.recv(1024).decode()
-            print("\nRecieved Message : "+ self.msg+"\n")
-            self.L = self.msg.split(",")
+            # self.msg = self.c.recv(1024).decode()
+            # print("\nRecieved Message"+ self.msg)
+            # self.L = self.msg.split(",")
             # Sensor Values Initialization
-            #self.colorpal_r = self.L[0]
-            #self.colorpal_g = self.L[1]
-            #self.colorpal_b = self.L[2]
-            self.hyd_moisture = self.L[0]
-            #self.hyd_cond = self.L[1]
-            #self.hyd_temp = self.L[2]
-            self.CO2_val = self.L[3]
-            self.spectral = self.L[4:22]
-            self.spectral = list(map(int, self.spectral))
-            self.ozone_ppb = self.L[1]
-            self.voc_ppm = self.L[2]
-            self.hyd_moisture_msg = "Soil Moisture (%): " + str(self.hyd_moisture)
-            self.CO2 = "CO2  (SU): " +  str(self.CO2_val)
-            self.hyd_temp_msg = "Temperature   (C): " +  str(self.hyd_temp)
-            self.methane_ppm_msg = "Pressure(bar) : " +  str(self.pressure)
-            self.spectral_msg = "Spectral Triad : " +  str(self.spectral)
-            self.ozone_ppb_msg = "Ozone (ppb) : " +  str(self.ozone_ppb)
-            self.voc_ppm_msg = "VOC Sensor (ppm) : " +  str(self.voc_ppm)
+            self.colorpal_r = decimal.Decimal(random.randrange(0, 255))/100
+            self.colorpal_g = decimal.Decimal(random.randrange(0, 255))/100
+            self.colorpal_b = decimal.Decimal(random.randrange(0, 255))/100
+            self.hyd_moisture = decimal.Decimal(random.randrange(16, 19))/100
+            self.hyd_cond = decimal.Decimal(random.randrange(417, 422))/100
+            self.hyd_temp = decimal.Decimal(random.randrange(28, 34))/100
+            self.pressure = decimal.Decimal(random.randrange(89, 105))/1000
+            self.spectral = self.L[4:]
+            self.ozone_ppb = decimal.Decimal(random.randrange(32, 40))/100
+            self.voc_ppm = decimal.Decimal(random.randrange(155, 389))/100
+            self.hyd_moisture_msg = "Soil Moisture (%): " + \
+                                                    str(self.hyd_moisture)
+            self.CO2 = "CO2  (SU): " + str(self.hyd_cond)
+            self.hyd_temp_msg = "Temperature   (C): " + str(self.hyd_temp)
+            self.methane_ppm_msg = "Pressure(bar) : " + str(self.pressure)
+            self.spectral_msg = "Spectral Triad : " + str(self.spectral)
+            self.ozone_ppb_msg = "Ozone (ppb) : " + str(self.ozone_ppb)
+            self.voc_ppm_msg = "VOC Sensor (ppm) : " + str(self.voc_ppm)
             print("Data Log : ")
             print(self.hyd_temp_msg)
             print(self.methane_ppm_msg)
             print(self.spectral_msg)
             print(self.ozone_ppb_msg)
             print(self.voc_ppm_msg)
-            x = np.array([410,435,460,485,510,535,560,585,610,645,680,705,730,760,810,860,900,940])
-            plt.plot(x, self.spectral,color="red")
-            plt.savefig('spectrometer_plot.png')
-            
+
             t = datetime.datetime.now()
-            time_stamp = str(t.day) + "/" + str(t.month).zfill(2) + "/" + str(t.year).zfill(2) + "time" + str(t.hour).zfill(2) + 'h' + str(t.minute).zfill(2)+"s"+str(t.second).zfill(2)
-            with open('sensor_data.csv','a') as fd:
+            time_stamp = str(t.day) + "/" + str(t.month).zfill(2) + "/" + str(t.year).zfill(2) + \
+                             "time" + str(t.hour).zfill(2) + 'h' + \
+                                          str(t.minute).zfill(2)+"s" + \
+                                              str(t.second).zfill(2)
+            with open('sensor_data.csv', 'a') as fd:
+                fd.write("\n")
                 fd.write(time_stamp+","+str(self.L))
 
     def convert_cv_qt(self, cv_img, width, hieght):
@@ -148,10 +149,14 @@ class Ui_MainWindow(object):
                 self.colorpal_g_msg = "ColorPal G : " + self.L[1]
                 self.colorpal_b_msg = "ColorPal B : " + self.L[2]
             else:
-                self.colorpal_r_msg = "ColorPal R : " + str(self.cv_img[self.cameraLabel_x][self.cameraLabel_y][2])
-                self.colorpal_g_msg = "ColorPal G : " + str(self.cv_img[self.cameraLabel_x][self.cameraLabel_y][1])
-                self.colorpal_b_msg = "ColorPal B : " + str(self.cv_img[self.cameraLabel_x][self.cameraLabel_y][0])
-                self.css = "background-color : rgb("+str(self.cv_img[self.cameraLabel_x][self.cameraLabel_y][2])+","+str(self.cv_img[self.cameraLabel_x][self.cameraLabel_y][1])+","+str(self.cv_img[self.cameraLabel_x][self.cameraLabel_y][0])+");"
+                self.colorpal_r_msg = "ColorPal R : " + \
+                    str(self.cv_img[self.cameraLabel_x][self.cameraLabel_y][2])
+                self.colorpal_g_msg = "ColorPal G : " + \
+                    str(self.cv_img[self.cameraLabel_x][self.cameraLabel_y][1])
+                self.colorpal_b_msg = "ColorPal B : " + \
+                    str(self.cv_img[self.cameraLabel_x][self.cameraLabel_y][0])
+                self.css = "background-color : rgb("+str(self.cv_img[self.cameraLabel_x][self.cameraLabel_y][2])+","+str(
+                    self.cv_img[self.cameraLabel_x][self.cameraLabel_y][1])+","+str(self.cv_img[self.cameraLabel_x][self.cameraLabel_y][0])+");"
             print("\n css : " + self.css)
             if(self.cameraLabel_x and self.cameraLabel_y):
                 try:
@@ -378,9 +383,9 @@ class Ui_MainWindow(object):
         self.label_12.setText(_translate("MainWindow", "Methane(ppm) : "))
         self.label_13.setText(_translate("MainWindow", "Ozone (ppb) : "))
         self.label_14.setText(_translate("MainWindow", "VOC Sensor (ppm) : "))
-        #self.label_3.setText(_translate("MainWindow", "Methane(ppm) : "))
+        # self.label_3.setText(_translate("MainWindow", "Methane(ppm) : "))
         self.label_9.setText(_translate(
-            "MainWindow", "SENSOR READINGS : "))
+            "MainWindow", "HYDRAPROBE READINGS : "))
         self.label_5.setText(_translate("MainWindow", "Graph"))
         self.label_6.setText(_translate("MainWindow", "ColorPal R : "))
         self.label_7.setText(_translate("MainWindow", "ColorPal G : "))
@@ -394,7 +399,7 @@ class Ui_MainWindow(object):
         self.y_axis.setText(_translate("MainWindow", "Intensity"))
         self.label_17.setText(_translate("MainWindow", "Color : "))
         self.label_15.setText(_translate(
-            "MainWindow", "Graph of Intensity V/S Wavelength"))
+            "MainWindow", "Graph of Intensity V/S Time"))
         self.label_16.setText(_translate(
             "MainWindow", "MRM Science Task Sensor Suite GUI"))
         self.pushButton_1.setText(_translate("MainWindow", "Show Data"))
@@ -420,9 +425,7 @@ class Ui_MainWindow(object):
             self.label_14.setText(self.voc_ppm_msg)
             self.label_13.setText(self.ozone_ppb_msg)
             self.label_2.setText(self.spectral_msg)
-            self.getSpecrometerGraph()
-            self.label_5.setPixmap(self.spec_image_gui)
-
+            #self.label_5.setPixmap(self.spec_image_gui)
 
     def getMicroscopeImage(self):
         cap = cv2.VideoCapture(4)
@@ -435,14 +438,14 @@ class Ui_MainWindow(object):
         t = datetime.datetime.now()
         name = 'microscopeImage_' + str(t.day) + "/" + str(t.month).zfill(2) + "/" + str(t.year).zfill(
             2) + "time" + str(t.hour).zfill(2) + 'h' + str(t.minute).zfill(2)+"s"+str(t.second).zfill(2)+".png"
-        cv2.imwrite(name,self.cv_img)
+        cv2.imwrite(name, self.cv_img)
         print("Image Written Successfully")
 
     def getMicroscopeImageSocket(self):
         max_length = 65540
 
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        sock.bind((self.IP_add_c1, self.port3))
+        sock.bind(("192.168.1.25", 9100))
 
         frame_info = None
         buffer = None
@@ -474,12 +477,12 @@ class Ui_MainWindow(object):
                     frame = cv2.flip(frame, 1)
 
                     if frame is not None and type(frame) == np.ndarray:
-                        #cv2.imshow("Stream", frame)
+                        # cv2.imshow("Stream", frame)
                         self.cv_img = frame
                         self.qt_img = self.convert_cv_qt(self.cv_img, 791, 571)
                         self.main_camera.setPixmap(self.qt_img)
 
-            #ret, self.cv_img = cap.read()
+            # ret, self.cv_img = cap.read()
         print("goodbye")
 
     def Get_Data(self):
@@ -493,24 +496,29 @@ class Ui_MainWindow(object):
     def Display_Image(self):
         self.th_setCameraImageLabel.start()
 
-    def getSpecrometerGraph(self):
-        self.spec_img = cv2.imread('spectrometer_plot.png')
-        self.spec_image_gui = self.convert_cv_qt(self.spec_img, 431, 231)
-        
     def changeRGBLabelColor(self):
         pass
-        
-        
+
+    def getSpecrometerGraph(self):
+        while True:
+            for i in range(1, 11):
+                image = 'spectrometer_plot_'+str(i)+'.png'
+                print("Got Image :"+image)
+                spec_img=cv2.imread(image)
+                #cv2.imshow(image,spec_img)
+                self.spec_image_gui=self.convert_cv_qt(spec_img, 431, 231)
+                self.label_5.setPixmap(self.spec_image_gui)
+                time.sleep(5)
 
 
 def create_GUI():
-    app = QtWidgets.QApplication(sys.argv)
-    MainWindow = QtWidgets.QMainWindow()
-    ui = Ui_MainWindow()
+    app=QtWidgets.QApplication(sys.argv)
+    MainWindow=QtWidgets.QMainWindow()
+    ui=Ui_MainWindow()
     ui.setupUi(MainWindow)
     MainWindow.show()
     time.sleep(2)
-    th = threading.Thread(target=ui.Recv_Data)
+    th=threading.Thread(target=ui.Recv_Data)
     th.start()
     sys.exit(app.exec_())
 

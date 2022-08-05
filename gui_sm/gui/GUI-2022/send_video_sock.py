@@ -1,20 +1,16 @@
-#!/usr/bin/env python3
 import cv2
 import socket
 import math
 import pickle
 import sys
-import rospy
 
-
-rospy.init_node('send_video_soc')
 max_length = 65000
-host = "192.168.1.75"
-port = 9100
+host = sys.argv[1]
+port = int(sys.argv[2])
 
 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
-cap = cv2.VideoCapture(0)
+cap = cv2.VideoCapture(int(sys.argv[3]))
 ret, frame = cap.read()
 
 while ret:
