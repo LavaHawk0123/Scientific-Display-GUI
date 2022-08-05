@@ -1,0 +1,3 @@
+<launch>
+  <node name="launch_gui" pkg="gui_sm" type="MRM_SM_GUI_Iter1.py" output="screen"/>
+</launch>

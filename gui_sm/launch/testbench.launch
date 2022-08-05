@@ -1,0 +1,4 @@
+<launch>
+  <node name="load_dummy_params" pkg="gui_sm" type="test_param_load.py" output="screen"/>
+  <include file="$(find gui_sm)/launch/launch_backend.launch"/>
+</launch>

@@ -1,0 +1,4 @@
+<launch>
+  <node name="create_comb_msg" pkg="gui_sm" type="socket_testbench.py" output="screen"/>
+  <node name="send_socket_to_gui" pkg="gui_sm" type="get_params.py" output="screen"/>
+</launch>

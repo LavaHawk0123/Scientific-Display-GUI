@@ -1,0 +1,8 @@
+<launch>
+  <node pkg="science_sensors" name="aero.py" type="aero.py" output="screen"/>
+  <!--<node pkg="science_sensors" name="colour_pal.py" type="colour_pal.py" output="screen"/>-->
+  <!--<node pkg="science_sensors" name="test.py" type="test.py" output="screen"/>-->
+  <node pkg="science_sensors" name="ccs811.py" type="ccs811.py" output="screen"/>
+  <node pkg="science_sensors" name="get_esp.py" type="get_esp.py" output="screen"/>
+
+</launch>
